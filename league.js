@@ -182,6 +182,7 @@
                 var iconId = "team-icon-" + teamStandings.teamAbbr.toLowerCase();
                 var svg = document.createElement('object');
                 svg.setAttribute('type', 'image/svg+xml');
+                svg.setAttribute('rel', 'prefetch');
                 svg.setAttribute('data', '../img/' + teamStandings.teamAbbr.toLowerCase() + '.svg');
                 svg.setAttribute('height', iconSize);
                 svg.setAttribute('width', iconSize);
@@ -205,13 +206,13 @@
                   }
                 }
                 // This fails pretty often, so try a few times.
-                setTimeout(paint, 100,  teamStandings.teamColor, iconId);
-                setTimeout(paint, 250,  teamStandings.teamColor, iconId);
-                setTimeout(paint, 500,  teamStandings.teamColor, iconId);
-                setTimeout(paint, 1000, teamStandings.teamColor, iconId);
-                setTimeout(paint, 1500, teamStandings.teamColor, iconId);
-                setTimeout(paint, 2500, teamStandings.teamColor, iconId);
-                setTimeout(paint, 5000, teamStandings.teamColor, iconId);
+                setTimeout(paint, 100,   teamStandings.teamColor, iconId);
+                setTimeout(paint, 250,   teamStandings.teamColor, iconId);
+                setTimeout(paint, 500,   teamStandings.teamColor, iconId);
+                setTimeout(paint, 1000,  teamStandings.teamColor, iconId);
+                setTimeout(paint, 1500,  teamStandings.teamColor, iconId);
+                setTimeout(paint, 2500,  teamStandings.teamColor, iconId);
+                setTimeout(paint, 5000,  teamStandings.teamColor, iconId);
                 setTimeout(paint, 10000, teamStandings.teamColor, iconId);
               }
 
