@@ -404,8 +404,8 @@
           var icontainerId = "champion-icon-container";
           var icontainer = document.getElementById(icontainerId);
           var svg = document.createElement("object");
-
           svg.setAttribute('type', 'image/svg+xml');
+          svg.setAttribute('rel', 'prefetch');
           svg.setAttribute('data', '../img/' + apiResult.teamAbbr.toLowerCase() + '.svg');
           svg.setAttribute('height', iconSize);
           svg.setAttribute('width', iconSize);
@@ -433,9 +433,6 @@
           setTimeout(paint, 500,   apiResult.teamColor, iconId);
           setTimeout(paint, 1000,  apiResult.teamColor, iconId);
           setTimeout(paint, 1500,  apiResult.teamColor, iconId);
-          setTimeout(paint, 2500,  apiResult.teamColor, iconId);
-          setTimeout(paint, 5000,  apiResult.teamColor, iconId);
-          setTimeout(paint, 10000, apiResult.teamColor, iconId);
 
         } else {
           throw "Missing required keys (teamName, teamAbbr) from /champion API response";
