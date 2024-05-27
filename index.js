@@ -428,14 +428,14 @@
           }
 
           // This fails pretty often, so try a few times.
-          setTimeout(paint, 100,  apiResult.teamColor, iconId);
-          setTimeout(paint, 250,  apiResult.teamColor, iconId);
-          setTimeout(paint, 500,  apiResult.teamColor, iconId);
-          setTimeout(paint, 1000, apiResult.teamColor, iconId);
-          setTimeout(paint, 1500, apiResult.teamColor, iconId);
-          setTimeout(paint, 2500, teamStandings.teamColor, iconId);
-          setTimeout(paint, 5000, teamStandings.teamColor, iconId);
-          setTimeout(paint, 10000, teamStandings.teamColor, iconId);
+          setTimeout(paint, 100,   apiResult.teamColor, iconId);
+          setTimeout(paint, 250,   apiResult.teamColor, iconId);
+          setTimeout(paint, 500,   apiResult.teamColor, iconId);
+          setTimeout(paint, 1000,  apiResult.teamColor, iconId);
+          setTimeout(paint, 1500,  apiResult.teamColor, iconId);
+          setTimeout(paint, 2500,  apiResult.teamColor, iconId);
+          setTimeout(paint, 5000,  apiResult.teamColor, iconId);
+          setTimeout(paint, 10000, apiResult.teamColor, iconId);
 
         } else {
           throw "Missing required keys (teamName, teamAbbr) from /champion API response";
