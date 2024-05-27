@@ -432,6 +432,9 @@
           setTimeout(paint, 500,  winTeamColor, iconId);
           setTimeout(paint, 1000, winTeamColor, iconId);
           setTimeout(paint, 1500, winTeamColor, iconId);
+          setTimeout(paint, 2500, teamStandings.teamColor, iconId);
+          setTimeout(paint, 5000, teamStandings.teamColor, iconId);
+          setTimeout(paint, 10000, teamStandings.teamColor, iconId);
 
         } else {
           throw "Error finding winning team abbr from /champion API response";
