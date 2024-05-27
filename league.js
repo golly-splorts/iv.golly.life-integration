@@ -210,6 +210,9 @@
                 setTimeout(paint, 500,  teamStandings.teamColor, iconId);
                 setTimeout(paint, 1000, teamStandings.teamColor, iconId);
                 setTimeout(paint, 1500, teamStandings.teamColor, iconId);
+                setTimeout(paint, 2500, teamStandings.teamColor, iconId);
+                setTimeout(paint, 5000, teamStandings.teamColor, iconId);
+                setTimeout(paint, 10000, teamStandings.teamColor, iconId);
               }
 
               // Name next
