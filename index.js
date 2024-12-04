@@ -815,7 +815,7 @@
         } else if(mode==23) {
 
           ////////////////////////////
-          // Hellmouth II Cup Series
+          // Hellmouth V Cup Series
           // Scheduled
 
           // HCS has no league, single-column
@@ -1112,7 +1112,7 @@
         } else if (mode==33) {
 
           ////////////////////////////
-          // Hellmouth II Cup Series
+          // Hellmouth V Cup Series
           // In progress
 
           // HCS has no league, single-column

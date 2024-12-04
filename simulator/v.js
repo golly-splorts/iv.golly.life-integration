@@ -345,11 +345,11 @@
           var gameTitleElem = document.getElementById('golly-game-title');
           if (gameApiResult.isPostseason == true) {
             var sp1 = gameApiResult.season + 1;
-            gameTitleElem.innerHTML = "Hellmouth IV: " + gameApiResult.description + " <small>- S" + sp1 + "</small>";
+            gameTitleElem.innerHTML = "Hellmouth V: " + gameApiResult.description + " <small>- S" + sp1 + "</small>";
           } else {
             var sp1 = gameApiResult.season + 1;
             var dp1 = gameApiResult.day + 1;
-            var descr = "Hellmouth IV Cup: Season " + sp1 + " Day " + dp1;
+            var descr = "Hellmouth V Cup: Season " + sp1 + " Day " + dp1;
             gameTitleElem.innerHTML = descr;
           }
 
@@ -421,7 +421,7 @@
 
           // Set the game title
           var gameTitleElem = document.getElementById('golly-game-title');
-          gameTitleElem.innerHTML = "Hellmouth IV: " + mapApiResult.mapName;
+          gameTitleElem.innerHTML = "Hellmouth V: " + mapApiResult.mapName;
 
           this.setTeamNames();
           this.setColors();
