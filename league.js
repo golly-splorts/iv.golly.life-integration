@@ -90,7 +90,7 @@
 
       if (mode < 10) { // Pre-season
         if (currentSeason > 1) {
-          for (let i = 1; i < currentSeason - 1; i++) {
+          for (let i = 1; i < currentSeason; i++) {
             seasons.push(i);
           }
           // default has to be 1 prior, because currentSeason has not started yet
