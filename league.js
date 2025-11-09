@@ -7,20 +7,20 @@
 
     loadingElem : null,
     season : null,
-
-    currentSeason : null,
-    currentDay : null,
-    dps : null,
+    day: null,
+    urlSeason: null,
+    urlDay: null,
 
     containers : [
-      'league-standings-date-picker-container',
       'league-standings-header-container',
       'league-standings-container'
     ],
 
     init : function() {
+      this.getUrlParams();
       this.loading();
-      this.loadStandings();
+      this.loadConfig();
+      this.registerDropdownListeners();
     },
 
     /**
@@ -29,8 +29,6 @@
     error : function(mode) {
       // Hide elements
       this.loadingElem.classList.add('invisible');
-
-      // TODO: This is not hiding the league standings container
       for (var c in this.containers) {
         var elem = document.getElementById(this.containers[c]);
         elem.classList.add('invisible');
@@ -50,61 +48,26 @@
       this.loadingElem.classList.remove('invisible');
     },
 
-    getCurrentSeasonDay : function() {
+    /**
+     * Load parameters from the URL (if any are specified)
+     * and pass them along to the API-calling functions.
+     */
+    modeApiResult: null,
 
+    getUrlParams : function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      this.urlSeason = urlParams.get('season');
+      this.urlDay = urlParams.get('day');
     },
 
-    /**
-     * Load the standings by getting the selected season/day, then
-     * calling the appropriate APIs.
-     */
-    loadStandings : function() {
-
-      // Start by getting DPS
-      let url = this.baseApiUrl + '/dps';
+    loadConfig : function() {
+      let url = this.baseApiUrl + '/mode';
       fetch(url)
       .then(res => res.json())
-      .then((dpsApiResult) => {
-        this.dps = dpsApiResult;
-      })
-      .catch(err => {
-        console.log(err);
-        this.error(-1);
-      });
-
-      // // Get season url parameter
-      // this.season = this.helpers.getUrlParameter('season');
-
-      // Check current season and day
-      let turl = this.baseApiUrl + '/today';
-      fetch(turl)
-      .then(res => res.json())
-      .then((todayApiResult) => {
-
-        this.currentSeason = todayApiResult[0];
-        this.currentDay = todayApiResult[1];
-
-        // Use this.season instead of this.currentSeason,
-        // in case user selected different season.
-        if (this.season==null) {
-          this.season = this.currentSeason;
-        }
-        // Use this.day instead of this.currentDay,
-        // in case user selected different day.
-        if (this.day==null) {
-          this.day = this.currentDay;
-        } else if (this.day >= this.dps) {
-          this.day = this.dps;
-        }
-
-        // Only continue with loading season standings
-        // if specified season is valid
-        if (this.season <= this.currentSeason) {
-          this.updateSeasonHeader(this.season);
-          this.populateSeasonDayPicker(this.dps, this.season, this.day);
-          this.processStandingsData(this.season, this.day);
-          this.registerEvents();
-        }
+      .then((modeApiResult) => {
+        this.modeApiResult = modeApiResult;
+        this.populateDropdowns();
+        this.processStandingsData(this.season, this.day);
       })
       .catch(err => {
         console.log(err);
@@ -112,93 +75,171 @@
       });
     },
 
-    changeHandler : function () {
-      console.log('Dropdown change handler');
+    populateDropdowns: function() {
+      const seasonDropdownMenu = document.getElementById('season-dropdown-menu');
+      seasonDropdownMenu.innerHTML = '';
+      const seasonDropdownButton = document.getElementById('season-dropdown-button');
+      const mode = this.modeApiResult.mode;
 
-      newSeason = document.getElementById('season-picker-select');
-      newDay    = document.getElementById('day-picker-select');
-
-      newSeason0 = newSeason.value-1;
-      newDay0    = newDay.value-1;
+      const currentSeason0 = this.modeApiResult.season;
+      const currentSeason = currentSeason0 + 1;
       
-      console.log(newSeason0);
-      console.log(newDay0);
-      console.log(LeaguePage.currentSeason);
+      // 1-indexed
+      let seasons = [];
+      let defaultSeason;
 
-      // Set to current season if too large
-      if (newSeason0 > LeaguePage.currentSeason) {
-        newSeason0 = LeaguePage.currentSeason;
-      }
-
-      LeaguePage.updateSeasonHeader(newSeason0);
-
-      // When this triggers, we get a set of new team boxes tacked on, with no logos
-      // This should instead separate the drawing vs the updating
-      //LeaguePage.processStandingsData(newSeason0, newDay0);
-    },
-
-    updateSeasonHeader : function(season0) {
-
-      // Populate the "Season X" header
-      var seasonHeaderContainer = document.getElementById('league-standings-header-container');
-
-      // get element by id "landing-header-season" and change innerHTML to current season
-      var seasonHead = document.getElementById('standings-header-season-number');
-      if (seasonHead != null) {
-        var sp1 = parseInt(season0) + 1;
-        seasonHead.innerHTML = sp1;
-      }
-
-      seasonHeaderContainer.classList.remove('invisible');
-
-    },
-
-    populateSeasonDayPicker : function(dps, season0, day0) {
-
-      // Populate the season/day drop-down pickers
-
-      var pickerContainer, seasonPicker, dayPicker;
-
-      // Show the container with the two dropdowns
-      pickerContainer = document.getElementById('league-standings-date-picker-container');
-      pickerContainer.classList.remove('invisible');
-
-      // Get the two dropdown elements
-      seasonPicker = document.getElementById('season-picker-select');
-      dayPicker = document.getElementById('day-picker-select');
-
-      var iSeason, iDay;
-
-      // Populate season picker
-      for (iSeason = 0; iSeason <= season0; iSeason++) {
-        pickerOption = document.createElement('option');
-        pickerOption['value'] = iSeason+1;
-        pickerOption.text = iSeason+1;
-        if(season0==iSeason) {
-          pickerOption['selected'] = true;
+      if (mode < 10) { // Pre-season
+        if (currentSeason > 1) {
+          for (let i = 1; i < currentSeason - 1; i++) {
+            seasons.push(i);
+          }
+          defaultSeason = currentSeason - 1;
+        } else {
+          seasons.push(1);
+          defaultSeason = 1;
         }
-
-        seasonPicker.appendChild(pickerOption);
-      }
-
-      // Populate day picker
-      for (iDay = 0; iDay <= Math.min(day0, dps-1); iDay++) {
-        pickerOption = document.createElement('option');
-        pickerOption['value'] = iDay+1;
-        pickerOption.text = iDay+1;
-        // Deal with "day 99" meaning season is over (again)
-        if((day0==iDay) || (day0==99 && iDay==dps-1)) {
-          pickerOption['selected'] = true;
+      } else { // In-season or post-season
+        for (let i = 1; i <= currentSeason; i++) {
+          seasons.push(i);
         }
+        defaultSeason = currentSeason;
+      }
+      seasons.reverse();
 
-        dayPicker.appendChild(pickerOption);
+      seasons.forEach(s => {
+        const a = document.createElement('a');
+        a.classList.add('dropdown-item');
+        a.href = '#';
+        a.dataset.value = s;
+        a.textContent = s;
+        seasonDropdownMenu.appendChild(a);
+      });
+
+      // Start with the default
+      let selectedSeason = defaultSeason;
+
+      // Handle a user-provided season via url params
+      if (this.urlSeason) {
+        const urlSeasonNum = parseInt(this.urlSeason, 10);
+        if (!isNaN(urlSeasonNum) && urlSeasonNum > 0 && urlSeasonNum <= defaultSeason) {
+            selectedSeason = urlSeasonNum;
+        }
+        // Otherwise, just use default
       }
 
+      this.season = selectedSeason;
+      seasonDropdownButton.textContent = selectedSeason;
+
+      // Chain the day update drop-down (behavior depends on season drop-down)
+      this.updateDayDropdown();
     },
 
-    processStandingsData : function(season0, day0) {
+    updateDayDropdown: function() {
+      const dayDropdownMenu = document.getElementById('day-dropdown-menu');
+      dayDropdownMenu.innerHTML = '';
+      const dayDropdownButton = document.getElementById('day-dropdown-button');
+      const selectedSeason = parseInt(this.season);
+      const mode = this.modeApiResult.mode;
+      const currentSeason = this.modeApiResult.season;
+      const elapsed = this.modeApiResult.elapsed;
+      const daysPerSeason = 49;
 
-      // Load the league standings
+      let days = [];
+      let defaultDayValue;
+
+      if (mode >= 10 && mode < 20 && selectedSeason === currentSeason + 1) { // In-season, current season selected
+        const currentDay = Math.floor(elapsed / 3600) + 1;
+        if (currentDay > 1) {
+          for (let i = 1; i <= currentDay; i++) {
+            days.push(i);
+          }
+          defaultDayValue = currentDay;
+        } else {
+          // No full day has passed, so no days to list for this season.
+          // The fallback below will handle this.
+        }
+      } else { // Pre-season, post-season, or a past season is selected
+        for (let i = 1; i <= daysPerSeason; i++) {
+          days.push(i);
+        }
+        defaultDayValue = daysPerSeason;
+      }
+
+      if (days.length === 0) {
+        // This is a fallback for when no days are populated,
+        // e.g. in-season, current season, day 1.
+        days.push(1);
+        defaultDayValue = 1;
+      }
+      days.reverse();
+
+      days.forEach(d => {
+        const a = document.createElement('a');
+        a.classList.add('dropdown-item');
+        a.href = '#';
+        a.dataset.value = d;
+        a.textContent = d;
+        dayDropdownMenu.appendChild(a);
+      });
+
+      let selectedDay = defaultDayValue;
+      if (this.urlDay) {
+        const urlDayNum = parseInt(this.urlDay, 10);
+        if (!isNaN(urlDayNum) && urlDayNum > 0 && urlDayNum <= defaultDayValue) {
+            selectedDay = urlDayNum;
+        }
+        this.urlDay = null;
+      }
+
+      this.day = selectedDay;
+      dayDropdownButton.textContent = selectedDay;
+    },
+
+    registerDropdownListeners: function() {
+        const seasonDropdownMenu = document.getElementById('season-dropdown-menu');
+        const dayDropdownMenu = document.getElementById('day-dropdown-menu');
+        const seasonDropdownButton = document.getElementById('season-dropdown-button');
+        const dayDropdownButton = document.getElementById('day-dropdown-button');
+
+        seasonDropdownMenu.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (event.target.classList.contains('dropdown-item')) {
+                const selectedSeason = event.target.dataset.value;
+                this.season = selectedSeason;
+                seasonDropdownButton.textContent = selectedSeason;
+                this.updateDayDropdown();
+                this.processStandingsData(this.season, this.day);
+            }
+        });
+
+        dayDropdownMenu.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (event.target.classList.contains('dropdown-item')) {
+                const selectedDay = event.target.dataset.value;
+                this.day = selectedDay;
+                dayDropdownButton.textContent = selectedDay;
+                this.processStandingsData(this.season, this.day);
+            }
+        });
+    },
+
+    clearStandings: function() {
+        const league1div1 = document.getElementById('league-1-division-1-ul');
+        const league1div2 = document.getElementById('league-1-division-2-ul');
+        const league2div1 = document.getElementById('league-2-division-1-ul');
+        const league2div2 = document.getElementById('league-2-division-2-ul');
+        league1div1.innerHTML = '';
+        league1div2.innerHTML = '';
+        league2div1.innerHTML = '';
+        league2div2.innerHTML = '';
+    },
+
+    processStandingsData : function(season, day) {
+      this.clearStandings();
+      this.loading();
+
+      let season0 = season - 1;
+      let day0 = day - 1;
       let recordsUrl = this.baseApiUrl + '/standings/' + season0 + '/' + day0;
       fetch(recordsUrl)
       .then(res => res.json())
@@ -208,6 +249,9 @@
         this.loadingElem.classList.add('invisible');
         var leagueStandingsElem = document.getElementById('league-standings-container');
         leagueStandingsElem.classList.remove('invisible');
+        var leagueStandingsHeaderElem = document.getElementById('league-standings-header-container');
+        leagueStandingsHeaderElem.classList.remove('invisible');
+
 
         // Use league/division info to figure out where to update league/division names
         for (var iL in standingsApiResult.leagues) {
@@ -368,65 +412,19 @@
 
 
     /**
-     * Register event handlers for this session (one time execution)
+     * Register Event
      */
-    registerEvents : function () {
-      //this.helpers.registerEvent(document.getElementById('season-picker-select'), 'change', this.handlers.selectors.change, false);
-      //this.helpers.registerEvent(document.getElementById('day-picker-select'),    'change', this.handlers.selectors.change, false);
-
-      this.helpers.registerEvent(document.getElementById('season-picker-select'), 'change', this.changeHandler, false);
-      this.helpers.registerEvent(document.getElementById('day-picker-select'),    'change', this.changeHandler, false);
-    },
-
-
-    /** ****************************************************************************************************************************
-     * Event Handlers
-     */
-    handlers : {
-
-      selectors : {
-        /**
-         * Selector Handler - Change Event
-         */
-        change : function() {
-          newSeason = document.getElementById('season-picker-select');
-          newDay    = document.getElementById('day-picker-select');
-          
-          newSeason0 = newSeason.value-1;
-          newDay0    = newDay.value-1;
-
-          console.log(newSeason0);
-          console.log(newDay0);
-          console.log(LeaguePage.currentSeason);
-
-          if (newSeason0 <= LeaguePage.currentSeason) {
-            console.log('repopulating standings data');
-            this.updateSeasonHeader(LeaguePage.season);
-            this.processStandingsData(LeaguePage.season);
-          }
-        },
+    registerEvent : function (element, event, handler, capture) {
+      if (/msie/i.test(navigator.userAgent)) {
+        element.attachEvent('on' + event, handler);
+      } else {
+        element.addEventListener(event, handler, capture);
       }
-
     },
 
-    /** ****************************************************************************************************************************
-     * Helper functions
-     */
-    helpers : {
-      /**
-       * Register Event
-       */
-      registerEvent : function (element, event, handler, capture) {
-        if (/msie/i.test(navigator.userAgent)) {
-          element.attachEvent('on' + event, handler);
-        } else {
-          element.addEventListener(event, handler, capture);
-        }
-      },
-    }
   };
 
-  LeaguePage.helpers.registerEvent(window, 'load', function () {
+  LeaguePage.registerEvent(window, 'load', function () {
     LeaguePage.init();
   }, false);
 

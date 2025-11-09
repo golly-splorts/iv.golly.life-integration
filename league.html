@@ -178,11 +178,37 @@ var mapsApiUrl = 'https://maps.golly456.life';
 
   <div class="row text-center league-standings-header-row">
     <div class="col-md-12">
-      <h2 class="text-center league-standings-header-text">Season <span id="standings-header-season-number">_</span> Standings</h2>
+      <h1 class="text-center league-standings-header-text">League Standings</h2>
+    </div>
+  </div>
+
+  <div class="row text-center justify-content-center" id="dropdown-row">
+    <div class="col-auto">
+      <span class="mr-2">Season</span>
+      <div class="btn-group">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="season-dropdown-button">
+          Loading...
+        </button>
+        <div class="dropdown-menu" id="season-dropdown-menu" style="max-height: 200px; overflow-y: auto;">
+          </div>
+      </div>
+    </div>
+
+    <div class="col-auto">
+      <span class="mr-2">Day</span>
+      <div class="btn-group">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="day-dropdown-button">
+          Loading...
+        </button>
+        <div class="dropdown-menu" id="day-dropdown-menu" style="max-height: 200px; overflow-y: auto;">
+          </div>
+      </div>
     </div>
   </div>
 
 </div>
+
+
 
 <div class="container invisible" id="league-standings-container">
 
