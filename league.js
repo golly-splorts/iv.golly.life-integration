@@ -93,8 +93,10 @@
           for (let i = 1; i < currentSeason - 1; i++) {
             seasons.push(i);
           }
+          // default has to be 1 prior, because currentSeason has not started yet
           defaultSeason = currentSeason - 1;
         } else {
+          // Nothing has started yet
           seasons.push(1);
           defaultSeason = 1;
         }
@@ -138,17 +140,27 @@
       const dayDropdownMenu = document.getElementById('day-dropdown-menu');
       dayDropdownMenu.innerHTML = '';
       const dayDropdownButton = document.getElementById('day-dropdown-button');
-      const selectedSeason = parseInt(this.season);
       const mode = this.modeApiResult.mode;
-      const currentSeason = this.modeApiResult.season;
+
+      // 1-indexed
+      const selectedSeason = parseInt(this.season);
+
+      const currentSeason0 = this.modeApiResult.season;
+      const currentSeason = currentSeason0 + 1;
+
       const elapsed = this.modeApiResult.elapsed;
       const daysPerSeason = 49;
 
+      // 1-indexed
       let days = [];
       let defaultDayValue;
 
-      if (mode >= 10 && mode < 20 && selectedSeason === currentSeason + 1) { // In-season, current season selected
-        const currentDay = Math.floor(elapsed / 3600) + 1;
+      // mode < 10: handled by default case
+
+      // mode >= 10 && mode < 20: 
+      if (mode >= 10 && mode < 20 && selectedSeason === currentSeason) { // In-season, current season selected
+        const currentDay0 = Math.floor(elapsed / 3600);
+        const currentDay = currentDay0 + 1;
         if (currentDay > 1) {
           for (let i = 1; i <= currentDay; i++) {
             days.push(i);
@@ -156,14 +168,17 @@
           defaultDayValue = currentDay;
         } else {
           // No full day has passed, so no days to list for this season.
-          // The fallback below will handle this.
+          // Handled by default case below.
         }
+
       } else { // Pre-season, post-season, or a past season is selected
+
         for (let i = 1; i <= daysPerSeason; i++) {
           days.push(i);
         }
         defaultDayValue = daysPerSeason;
       }
+
 
       if (days.length === 0) {
         // This is a fallback for when no days are populated,
