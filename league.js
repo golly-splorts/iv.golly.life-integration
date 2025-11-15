@@ -83,7 +83,7 @@
 
       const currentSeason0 = this.modeApiResult.season;
       const currentSeason = currentSeason0 + 1;
-      
+
       // 1-indexed
       let seasons = [];
       let defaultSeason;
@@ -157,7 +157,7 @@
 
       // mode < 10: handled by default case
 
-      // mode >= 10 && mode < 20: 
+      // mode >= 10 && mode < 20:
       if (mode >= 10 && mode < 20 && selectedSeason === currentSeason) { // In-season, current season selected
         const currentDay0 = Math.floor(elapsed / 3600);
         const currentDay = currentDay0 + 1;
@@ -239,14 +239,16 @@
     },
 
     clearStandings: function() {
-        const league1div1 = document.getElementById('league-1-division-1-ul');
-        const league1div2 = document.getElementById('league-1-division-2-ul');
-        const league2div1 = document.getElementById('league-2-division-1-ul');
-        const league2div2 = document.getElementById('league-2-division-2-ul');
-        league1div1.innerHTML = '';
-        league1div2.innerHTML = '';
-        league2div1.innerHTML = '';
-        league2div2.innerHTML = '';
+        const ids = [
+            'league-1-division-1-tbody', 'league-1-division-2-tbody',
+            'league-2-division-1-tbody', 'league-2-division-2-tbody'
+        ];
+        ids.forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) {
+                elem.innerHTML = '';
+            }
+        });
     },
 
     processStandingsData : function(season, day) {
@@ -255,17 +257,140 @@
 
       let season0 = season - 1;
       let day0 = day - 1;
+      const dps = 49; // days per season
+
       let recordsUrl = this.baseApiUrl + '/standings/' + season0 + '/' + day0;
       fetch(recordsUrl)
       .then(res => res.json())
       .then((standingsApiResult) => {
 
+        const mode = this.modeApiResult.mode;
+        const currentSeason0 = this.modeApiResult.season;
+        const selectedSeason0 = season - 1;
+
+        const viewingLastDay = (day == dps);
+        const seasonIsOver = (selectedSeason0 < currentSeason0) || (selectedSeason0 === currentSeason0 && mode >= 20);
+
+        if (seasonIsOver && viewingLastDay) {
+            let seedsUrl = this.baseApiUrl + '/seeds/' + selectedSeason0;
+            fetch(seedsUrl)
+            .then(res => res.json())
+            .then(seedsApiResult => {
+                if (Object.keys(seedsApiResult).length === 0) {
+                    this.populateStandings(standingsApiResult, null);
+                } else {
+                    this.populateStandings(standingsApiResult, seedsApiResult);
+                }
+            })
+            .catch(err => {
+                console.log(`Could not fetch seeds for season ${selectedSeason0}, falling back to standings-based logic. Error: ${err}`);
+                this.populateStandings(standingsApiResult, null);
+            });
+        } else {
+            this.populateStandings(standingsApiResult, null);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+        this.error(-1);
+      }); // end API /standings
+    },
+
+    populateStandings: function(standingsApiResult, seedsApiResult) {
         // Hide loading message and make league standings container visible
         this.loadingElem.classList.add('invisible');
         var leagueStandingsElem = document.getElementById('league-standings-container');
         leagueStandingsElem.classList.remove('invisible');
         var leagueStandingsHeaderElem = document.getElementById('league-standings-header-container');
         leagueStandingsHeaderElem.classList.remove('invisible');
+
+        let seedPrefixes = null;
+        if (seedsApiResult) {
+            seedPrefixes = {};
+            for (const leagueName in seedsApiResult) {
+                if (!standingsApiResult.rankings[leagueName]) continue;
+                seedPrefixes[leagueName] = {};
+                const teamsInLeague = seedsApiResult[leagueName];
+
+                let allTeamsInLeague = [];
+                for (const divisionName in standingsApiResult.rankings[leagueName]) {
+                    standingsApiResult.rankings[leagueName][divisionName].forEach(team => {
+                        allTeamsInLeague.push(team.teamName);
+                    });
+                }
+
+                allTeamsInLeague.forEach(teamName => {
+                    seedPrefixes[leagueName][teamName] = 'e-';
+                });
+
+                // Build a map of team names to their division
+                const teamToDivisionMap = {};
+                for (const divisionName in standingsApiResult.rankings[leagueName]) {
+                    standingsApiResult.rankings[leagueName][divisionName].forEach(team => {
+                        teamToDivisionMap[team.teamName] = divisionName;
+                    });
+                }
+
+                // Identify division winners by finding the first team from each division in the seed-ordered list
+                const divisionWinnerNames = new Set();
+                const divisions = Object.keys(standingsApiResult.rankings[leagueName]);
+                divisions.forEach(divisionName => {
+                    for (const seededTeam of teamsInLeague) {
+                        if (teamToDivisionMap[seededTeam.teamName] === divisionName) {
+                            divisionWinnerNames.add(seededTeam.teamName);
+                            break; // Found the winner for this division
+                        }
+                    }
+                });
+
+                // Assign prefixes: x- for division winners, w- for wild cards.
+                // The 'e-' prefix has already been assigned to all teams.
+                teamsInLeague.forEach(seededTeam => {
+                    if (divisionWinnerNames.has(seededTeam.teamName)) {
+                        seedPrefixes[leagueName][seededTeam.teamName] = 'x-';
+                    } else {
+                        seedPrefixes[leagueName][seededTeam.teamName] = 'w-';
+                    }
+                });
+            }
+        }
+
+        // --- Pre-calculations for each league ---
+        let leagueCalculations = {};
+        for (var iL_pre in standingsApiResult.leagues) {
+            var league_pre = standingsApiResult.leagues[iL_pre];
+            var overall_league_standings = [];
+            var wc_standings = [];
+
+            for (var iD_pre in standingsApiResult.divisions) {
+                var division_pre = standingsApiResult.divisions[iD_pre];
+                if (standingsApiResult.rankings[league_pre] && standingsApiResult.rankings[league_pre][division_pre]) {
+                    var teams = standingsApiResult.rankings[league_pre][division_pre];
+                    teams.forEach((team, index) => {
+                        overall_league_standings.push(team);
+                        if (index > 0) { // Not a division leader
+                            wc_standings.push(team);
+                        }
+                    });
+                }
+            }
+
+            // Sort by wins (desc), then losses (asc)
+            const sortTeams = (a, b) => {
+                if (b.teamWinLoss[0] !== a.teamWinLoss[0]) {
+                    return b.teamWinLoss[0] - a.teamWinLoss[0];
+                }
+                return a.teamWinLoss[1] - b.teamWinLoss[1];
+            };
+
+            overall_league_standings.sort(sortTeams);
+            wc_standings.sort(sortTeams);
+
+            leagueCalculations[league_pre] = {
+                overall: overall_league_standings,
+                wildcard: wc_standings
+            };
+        }
 
 
         // Use league/division info to figure out where to update league/division names
@@ -278,6 +403,11 @@
           var leagueNameElem = document.getElementById(leagueNameId);
           leagueNameElem.innerHTML = league;
 
+          // Get pre-calculated standings for this league
+          const currentLeagueCalcs = leagueCalculations[league];
+          const overall_league_standings = currentLeagueCalcs.overall;
+          const wc_standings = currentLeagueCalcs.wildcard;
+
           for (var iD in standingsApiResult.divisions) {
             var iDp1 = parseInt(iD) + 1;
             var division = standingsApiResult.divisions[iD];
@@ -287,142 +417,244 @@
             var divisionNameElem = document.getElementById(divisionNameId);
             divisionNameElem.innerHTML = division;
 
-            // Create the <ul> and <li> elements for the division team ranking list
-            var ulElemId = 'league-' + iLp1 + '-division-' + iDp1 + '-ul';
-            var ulElem = document.getElementById(ulElemId);
+            var tbodyElemId = 'league-' + iLp1 + '-division-' + iDp1 + '-tbody';
+            var tbodyElem = document.getElementById(tbodyElemId);
 
-            // Now use the structured league/division nested dictionary
+            // Use documentFragment to compile the table ahead of time, then insert into page.
+            var fragment = document.createDocumentFragment();
+
+            if (!standingsApiResult.rankings[league] || !standingsApiResult.rankings[league][division]) {
+                continue;
+            }
+
             teamStandingsItems = standingsApiResult.rankings[league][division];
 
-            var iS;
-            for (iS = 0; iS < teamStandingsItems.length; iS++) {
+            let teamPrefixes = null;
+            if (seedPrefixes && seedPrefixes[league]) {
+                teamStandingsItems.sort((a, b) => {
+                    // Sort by wins descending
+                    if (b.teamWinLoss[0] !== a.teamWinLoss[0]) {
+                        return b.teamWinLoss[0] - a.teamWinLoss[0];
+                    }
+                    // wins/losses are zero sum, so skip losses
 
+                    // Now, for teams with the same W-L record, use clinch status.
+                    const prefixA = seedPrefixes[league][a.teamName];
+                    const prefixB = seedPrefixes[league][b.teamName];
+
+                    const order = { 'x-': 1, 'w-': 2, 'e-': 3 };
+
+                    const orderA = order[prefixA] || 4; // Unranked last
+                    const orderB = order[prefixB] || 4;
+
+                    return orderA - orderB;
+                });
+            } else {
+                // If seeds are not final, calculate prefixes and then sort
+                teamPrefixes = {};
+                const dps = 49;
+                const day0 = this.day - 1;
+                const divisionLeaderForPrefix = teamStandingsItems[0];
+
+                teamStandingsItems.forEach((team, index) => {
+                    let prefix = '';
+                    const our_wins = team.teamWinLoss[0];
+                    const our_losses = team.teamWinLoss[1];
+
+                    if (index === 0) { // Is division leader
+                        let is_div_clinched = false;
+                        if (teamStandingsItems.length > 1) {
+                            const second_place_losses = teamStandingsItems[1].teamWinLoss[1];
+                            const magic = (dps + 1) - our_wins - second_place_losses;
+                            if (magic <= 0) {
+                                is_div_clinched = true;
+                            }
+                        }
+                        if (day0 === dps - 1) { // Last day of season
+                            is_div_clinched = true;
+                        }
+                        if (is_div_clinched) {
+                            prefix = 'x-';
+                        }
+                    } else { // Not division leader
+                        const elim_val = (dps + 1) - divisionLeaderForPrefix.teamWinLoss[0] - our_losses;
+                        let wc_elim_val = Infinity;
+                        if (wc_standings.length > 1) {
+                            wc_elim_val = (dps + 1) - wc_standings[1].teamWinLoss[0] - our_losses;
+                        }
+                        const is_eliminated = (elim_val <= 0 && (wc_elim_val <= 0 || wc_standings.length < 2));
+                        if (is_eliminated) {
+                            prefix = 'e-';
+                        }
+                    }
+
+                    if (!prefix) { // Playoff Clinch (w-)
+                        let is_playoff_clinched = false;
+                        if (overall_league_standings.length > 4) {
+                            const challenger = overall_league_standings[4];
+                            const playoff_clinch_magic = (dps + 1) - our_wins - challenger.teamWinLoss[1];
+                            if (playoff_clinch_magic <= 0) {
+                                is_playoff_clinched = true;
+                            }
+                        } else {
+                            is_playoff_clinched = true;
+                        }
+                        if (is_playoff_clinched) {
+                            prefix = 'w-';
+                        }
+                    }
+                    teamPrefixes[team.teamName] = prefix;
+                });
+
+                teamStandingsItems.sort((a, b) => {
+                    if (b.teamWinLoss[0] !== a.teamWinLoss[0]) {
+                        return b.teamWinLoss[0] - a.teamWinLoss[0];
+                    }
+                    const prefixA = teamPrefixes[a.teamName];
+                    const prefixB = teamPrefixes[b.teamName];
+                    const order = { 'x-': 1, 'w-': 2, 'e-': 3 };
+                    const orderA = order[prefixA] || 4;
+                    const orderB = order[prefixB] || 4;
+                    return orderA - orderB;
+                });
+            }
+
+            const divisionLeader = teamStandingsItems[0];
+            const dps = 49;
+            const day0 = this.day - 1;
+
+            for (var iS = 0; iS < teamStandingsItems.length; iS++) {
               var teamStandings = teamStandingsItems[iS];
+              let prefix = '';
 
-              /////////////////////////////////
-              // Add an entry for each team
-              // to the league standings page
-              //
-              // <li>
-              //   <h6>
-              //     <span>
-              //         (icon)
-              //         (team name)
-              //     </span>
-              //     <span>
-              //          (team win/loss record)
-              //     </span>
-              //   </h6>
-              // </li>
+              const our_wins = teamStandings.teamWinLoss[0];
+              const our_losses = teamStandings.teamWinLoss[1];
 
-              // Add an li element for this team
-              var liElem = document.createElement('li');
-              liElem.classList.add('list-group-item');
-              liElem.classList.add('d-flex');
-              liElem.classList.add('justify-content-between');
-              liElem.classList.add('align-items-center');
+              if (seedPrefixes) {
+                  prefix = seedPrefixes[league][teamStandings.teamName] || '';
+              } else if (teamPrefixes) {
+                  prefix = teamPrefixes[teamStandings.teamName] || '';
+              }
 
-              // ----------------
-              // Left side: name + icon in a single span, wrapped by <h6>
-              var h6 = document.createElement('h6');
-              h6.classList.add('standings-team-name');
+              var tr = document.createElement('tr');
 
-              var nameiconId = 'league-name-icon-holder';
+              // Col 1: Team Name + Icon
+              var tdTeam = document.createElement('td');
+              tdTeam.classList.add('text-left', 'team-cell'); // Align left + ADDED team-cell
               var nameicon = document.createElement('span');
-              nameicon.setAttribute('id', nameiconId);
-
-              // Icon first (far left)
+              // Icon
               if (teamStandings.hasOwnProperty('teamAbbr')) {
-                var icontainerId = "team-icon-container-" + teamStandings.teamAbbr.toLowerCase();
                 var container = document.createElement('span');
-                container.setAttribute('id', icontainerId);
-                container.classList.add('icon-container');
-                container.classList.add('league-icon-container');
-                container.classList.add('text-center');
-
+                container.classList.add('icon-container', 'league-icon-container', 'text-center');
                 var iconSize = "25";
-                var iconId = "team-icon-" + teamStandings.teamAbbr.toLowerCase();
+                var iconId = "team-icon-" + teamStandings.teamAbbr.toLowerCase() + '-' + iL + '-' + iD + '-' + iS;
                 var svg = document.createElement('object');
                 svg.setAttribute('type', 'image/svg+xml');
-                svg.setAttribute('rel', 'prefetch');
                 svg.setAttribute('data', '../img/' + teamStandings.teamAbbr.toLowerCase() + '.svg');
                 svg.setAttribute('height', iconSize);
                 svg.setAttribute('width', iconSize);
                 svg.setAttribute('id', iconId);
-                svg.classList.add('icon');
-                svg.classList.add('team-icon');
-                svg.classList.add('invisible');
-
-                // Attach icon to container, and container to nameicon
+                svg.classList.add('icon', 'team-icon', 'invisible');
                 container.appendChild(svg);
                 nameicon.appendChild(container);
-
-                // Wait a little bit for the data to load,
-                // then modify the color and make it visible
                 var paint = function(color, elemId) {
                   var mysvg = $('#' + elemId).getSVG();
-                  var child = mysvg.find("g path:first-child()");
-                  if (child.length > 0) {
-                    child.attr('fill', color);
-                    $('#' + elemId).removeClass('invisible');
+                  if (mysvg) {
+                    var child = mysvg.find("g path:first-child()");
+                    if (child.length > 0) {
+                      child.attr('fill', color);
+                      $('#' + elemId).removeClass('invisible');
+                    }
                   }
                 }
-                // This fails pretty often, so try a few times.
-                setTimeout(paint, 100,   teamStandings.teamColor, iconId);
-                setTimeout(paint, 250,   teamStandings.teamColor, iconId);
-                setTimeout(paint, 500,   teamStandings.teamColor, iconId);
-                setTimeout(paint, 1000,  teamStandings.teamColor, iconId);
-                setTimeout(paint, 1500,  teamStandings.teamColor, iconId);
+                setTimeout(paint, 100, teamStandings.teamColor, iconId);
+                setTimeout(paint, 500, teamStandings.teamColor, iconId);
+                setTimeout(paint, 1500, teamStandings.teamColor, iconId);
               }
-
-              // Name next
+              // Name
               var nameSpanElem = document.createElement('span');
-              nameSpanElem.innerHTML = teamStandings.teamName;
+              nameSpanElem.innerHTML = prefix + teamStandings.teamName;
               nameSpanElem.style.color = teamStandings.teamColor;
+
+              nameSpanElem.style.fontWeight = '500';
+              nameSpanElem.style.lineHeight = '1.2';
               nameicon.appendChild(nameSpanElem);
+              tdTeam.appendChild(nameicon);
+              tr.appendChild(tdTeam);
 
-              // // Attach to left side
-              // liElem.appendChild(nameicon);
+              // Col 2: Wins
+              var tdW = document.createElement('td');
+              tdW.classList.add('text-center'); // Align right
+              tdW.textContent = our_wins;
+              tr.appendChild(tdW);
 
-              // Attach nameicon to h6
-              h6.appendChild(nameicon);
-              // Attach h6 to left side
-              liElem.appendChild(h6);
+              // Col 3: Losses
+              var tdL = document.createElement('td');
+              tdL.classList.add('text-center'); // Align right
+              tdL.textContent = our_losses;
+              tr.appendChild(tdL);
 
-              // ----------------
-              // Right side: win-loss record, wrapped by <h6>
-              var h6r = document.createElement('h6');
-              h6r.classList.add('standings-team-record');
+              // Col 4: Pct
+              var tdPct = document.createElement('td');
+              tdPct.classList.add('text-center'); // Align right
+              const total_games = our_wins + our_losses;
+              const pct = total_games > 0 ? (our_wins / total_games) : 0.0;
+              tdPct.textContent = pct.toFixed(2);
+              tr.appendChild(tdPct);
 
-              var wlElem = document.createElement('span');
-              wlElem.classList.add('standings-record');
-              var winLossStr = teamStandings.teamWinLoss[0] + "-" + teamStandings.teamWinLoss[1];
-              wlElem.innerHTML = winLossStr;
+              // Col 5: GB
+              var tdGb = document.createElement('td');
+              tdGb.classList.add('text-center'); // Align right
+              if (iS === 0) {
+                  tdGb.textContent = '-';
+              } else {
+                  const first_wins = divisionLeader.teamWinLoss[0];
+                  const first_losses = divisionLeader.teamWinLoss[1];
+                  const gb_val = ((first_wins - first_losses) - (our_wins - our_losses)) / 2;
+                  tdGb.textContent = gb_val > 0 ? gb_val : '-';
+              }
+              tr.appendChild(tdGb);
 
-              //// Attach to right side
-              //liElem.appendChild(wlElem);
+              // Col 6: Elim #
+              var tdElim = document.createElement('td');
+              tdElim.classList.add('text-center'); // Align right
+              if (iS === 0) {
+                  tdElim.textContent = '-';
+              } else {
+                  const elim_val = (dps + 1) - divisionLeader.teamWinLoss[0] - our_losses;
+                  tdElim.textContent = elim_val > 0 ? elim_val : '0';
+              }
+              tr.appendChild(tdElim);
 
-              // Attach W-L record to h6 header
-              h6r.appendChild(wlElem);
-              // Attach h6 header to li element
-              liElem.appendChild(h6r);
+              // Col 7: WC Elim #
+              var tdWcElim = document.createElement('td');
+              tdWcElim.classList.add('text-center'); // Align right
+              if (iS === 0) {
+                  tdWcElim.textContent = '-';
+              } else {
+                let wc_elim_val_str = '-';
+                if (wc_standings.length > 1) {
+                    const wc_elim_val = (dps + 1) - wc_standings[1].teamWinLoss[0] - our_losses;
+                    if (wc_elim_val > 0) {
+                      wc_elim_val_str = wc_elim_val;
+                    } else {
+                      wc_elim_val_str = '0';
+                    }
+                }
+                tdWcElim.textContent = wc_elim_val_str;
+              }
+              tr.appendChild(tdWcElim);
 
-              ulElem.appendChild(liElem);
+              // Append row to fragment
+              fragment.appendChild(tr);
 
             } // finish for each team in the standings
 
-            iD++;
+            // Append fragment to live DOM
+            tbodyElem.appendChild(fragment);
+
           } // end each division loop
-
-          iL++;
         } // end each league loop
-
-      })
-      .catch(err => {
-        console.log(err);
-        this.error(-1);
-      }); // end API /standings
-
     },
 
 

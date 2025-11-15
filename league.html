@@ -24,7 +24,7 @@ var mapsApiUrl = 'https://maps.golly456.life';
 
     <!--
         Versions:
-        gollyx-iv-pelican: 612.1
+        gollyx-iv-pelican: 613.0
         gollyx-iv-pelican-theme: 401.1.0
     -->
 
@@ -174,6 +174,44 @@ var mapsApiUrl = 'https://maps.golly456.life';
   </div>
 </div>
 
+<style>
+  .card .table th,
+  .card .table td {
+    /* Add vertical lines */
+    border-top: none;
+    border-bottom: none;
+    font-size: 0.9375rem;
+  }
+
+
+
+  /* Prevent line wrapping in the team name column */
+  .card .table .team-cell {
+    white-space: nowrap;
+  }
+
+  /* Make the 'Team' header bold */
+  .card .table th.text-left {
+    font-weight: bold;
+  }
+
+  /* Make the team name cells bold */
+  .card .table tbody tr td:first-child {
+    font-weight: bold;
+  }
+
+  /* Center align text in non-team-name data cells */
+  .card .table tbody tr td:nth-child(n+2) {
+    text-align: center;
+  }
+
+  /* Add left border to all th and td except the first one */
+  .card .table th:not(:first-child),
+  .card .table td:not(:first-child) {
+    border-left: 1px solid rgba(255,255,255,0.15);
+  }
+</style>
+
 <div class="container invisible" id="league-standings-header-container">
 
   <div class="row text-center league-standings-header-row">
@@ -212,75 +250,138 @@ var mapsApiUrl = 'https://maps.golly456.life';
 
 <div class="container invisible" id="league-standings-container">
 
-  <!-- league 1 -->
   <div class="row text-center justify-content-lg-center league-standings-league-header-row">
-    <div class="col-md-8">
+    <div class="col-md-12">
       <h2 class="text-center league-standings-league-header-text"><span id="league-1-name"></span></h2>
     </div>
   </div>
 
   <div class="row justify-content-lg-center" id="league-1-container">
 
-    <div class="col-lg-5" id="league-1-division-1-container">
-      <h4 class="text-center league-standings-division-header-text"><span id="league-1-division-1-name"></span></h4>
-      <ul class="list-group" id="league-1-division-1-ul">
-        <!--
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          Team 1
-          <span class="standings-record">W-L</span>
-        </li>
-        -->
-      </ul>
+    <div class="col-xl-6 mb-4" id="league-1-division-1-container">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title text-center league-standings-division-header-text"><span id="league-1-division-1-name"></span></h4>
+          <div class="table-responsive-sm">
+            <table class="table table-striped table-sm table-hover">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-left">Team</th>
+                  <th scope="col" class="text-center">W</th>
+                  <th scope="col" class="text-center">L</th>
+                  <th scope="col" class="text-center">Pct</th>
+                  <th scope="col" class="text-center">GB</th>
+                  <th scope="col" class="text-center">E#</th>
+                  <th scope="col" class="text-center">WCE#</th>
+                </tr>
+              </thead>
+              <tbody id="league-1-division-1-tbody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="col-lg-5" id="league-1-division-2-container">
-      <h4 class="text-center league-standings-division-header-text"><span id="league-1-division-2-name"></span></h4>
-      <ul class="list-group" id="league-1-division-2-ul">
-        <!--
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          Team 1
-          <span class="standings-record">W-L</span>
-        </li>
-        -->
-      </ul>
+    <div class="col-xl-6 mb-4" id="league-1-division-2-container">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title text-center league-standings-division-header-text"><span id="league-1-division-2-name"></span></h4>
+          <div class="table-responsive-sm">
+            <table class="table table-striped table-sm table-hover">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-left">Team</th>
+                  <th scope="col" class="text-center">W</th>
+                  <th scope="col" class="text-center">L</th>
+                  <th scope="col" class="text-center">Pct</th>
+                  <th scope="col" class="text-center">GB</th>
+                  <th scope="col" class="text-center">E#</th>
+                  <th scope="col" class="text-center">WCE#</th>
+                </tr>
+              </thead>
+              <tbody id="league-1-division-2-tbody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
 
-  <!-- league 2 -->
   <div class="row text-center justify-content-lg-center league-standings-league-header-row">
-    <div class="col-md-8">
+    <div class="col-md-12">
       <h2 class="text-center league-standings-league-header-text"><span id="league-2-name"></span></h2>
     </div>
   </div>
 
   <div class="row justify-content-lg-center" id="league-2-container">
 
-    <div class="col-lg-5" id="league-2-division-1-container">
-      <h4 class="text-center league-standings-division-header-text"><span id="league-2-division-1-name"></span></h4>
-      <ul class="list-group" id="league-2-division-1-ul">
-        <!--
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          Team 1
-          <span class="standings-record">W-L</span>
-        </li>
-        -->
-      </ul>
+    <div class="col-xl-6 mb-4" id="league-2-division-1-container">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title text-center league-standings-division-header-text"><span id="league-2-division-1-name"></span></h4>
+          <div class="table-responsive-sm">
+            <table class="table table-striped table-sm table-hover">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-left">Team</th>
+                  <th scope="col" class="text-center">W</th>
+                  <th scope="col" class="text-center">L</th>
+                  <th scope="col" class="text-center">Pct</th>
+                  <th scope="col" class="text-center">GB</th>
+                  <th scope="col" class="text-center">E#</th>
+                  <th scope="col" class="text-center">WCE#</th>
+                </tr>
+              </thead>
+              <tbody id="league-2-division-1-tbody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="col-lg-5" id="league-2-division-1-container">
-      <h4 class="text-center league-standings-division-header-text"><span id="league-2-division-2-name"></span></h4>
-      <ul class="list-group" id="league-2-division-2-ul">
-        <!--
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          Team 1
-          <span class="standings-record">W-L</span>
-        </li>
-        -->
-      </ul>
+    <div class="col-xl-6 mb-4" id="league-2-division-2-container">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title text-center league-standings-division-header-text"><span id="league-2-division-2-name"></span></h4>
+          <div class="table-responsive-sm">
+            <table class="table table-striped table-sm table-hover">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-left">Team</th>
+                  <th scope="col" class="text-center">W</th>
+                  <th scope="col" class="text-center">L</th>
+                  <th scope="col" class="text-center">Pct</th>
+                  <th scope="col" class="text-center">GB</th>
+                  <th scope="col" class="text-center">E#</th>
+                  <th scope="col" class="text-center">WCE#</th>
+                </tr>
+              </thead>
+              <tbody id="league-2-division-2-tbody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+        <hr />
+        <h5>Legend</h5>
+        <ul class="list-unstyled">
+            <li><strong>x-</strong> : Clinched Division</li>
+            <li><strong>w-</strong> : Clinched Wild Card</li>
+            <li><strong>e-</strong> : Eliminated</li>
+        </ul>
+    </div>
+  </div>
+
 
 </div>
 
@@ -308,7 +409,7 @@ var mapsApiUrl = 'https://maps.golly456.life';
         <p>
         Ninjas have been dispatched to track down those responsible for the downtime
         and bring them back to Hellmouth Community College to fix the site.
-        </p>
+        </f>
       </div>
     </div>
 
