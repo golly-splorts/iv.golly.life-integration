@@ -150,35 +150,6 @@
               }
             }
 
-            // // Make new label visible if map start date within 2 seasons
-            // var newBadgeElems = mapCard.getElementsByClassName('map-badge-new');
-            // var iNew;
-            // for (iNew = 0; iNew < newBadgeElems.length; iNew++) {
-            //   var newBadgeElem = newBadgeElems[iNew];
-            //   var show = false;
-            //   if (thisMap.hasOwnProperty('mapStartSeason')) {
-            //     if (thisMap.mapStartSeason <= this.season0) {
-            //       if ((this.season0 - thisMap.mapStartSeason) <= 2) {
-            //         show = true;
-            //         newBadgeElem.classList.remove('invisible');
-            //       }
-            //     }
-            //   }
-            //   if (!show) {
-            //     newBadgeElem.remove();
-            //   }
-            // }
-
-            // // Add the season label to all maps
-            // var seaBadgeElems = mapCard.getElementsByClassName('map-badge-season');
-            // var iSea;
-            // for (iSea = 0; iSea < seaBadgeElems.length; iSea++) {
-            //   var seaBadgeElem = seaBadgeElems[iSea];
-            //   if (thisMap.hasOwnProperty('mapStartSeason')) {
-            //     seaBadgeElem.innerHTML = "Season " + (thisMap.mapStartSeason+1);
-            //     seaBadgeElem.classList.remove('invisible');
-            //   }
-            // }
 
             // set inner html of map season badge, and make it visible
             var mapsContainer = document.getElementById('container-maps');
