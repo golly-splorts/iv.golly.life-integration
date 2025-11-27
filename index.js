@@ -384,7 +384,6 @@
 
       // get current champion from API
       let url = this.baseApiUrl + '/champion';
-      console.log(url);
       fetch(url)
       .then(res => res.json())
       .then((apiResult) => {
@@ -405,7 +404,6 @@
           var icontainer = document.getElementById(icontainerId);
           var svg = document.createElement("object");
           svg.setAttribute('type', 'image/svg+xml');
-          svg.setAttribute('rel', 'prefetch');
           svg.setAttribute('data', '../img/' + apiResult.teamAbbr.toLowerCase() + '.svg');
           svg.setAttribute('height', iconSize);
           svg.setAttribute('width', iconSize);
@@ -426,13 +424,10 @@
               $('#' + elemId).removeClass('invisible');
             }
           }
-
           // This fails pretty often, so try a few times.
-          setTimeout(paint, 100,   apiResult.teamColor, iconId);
-          setTimeout(paint, 250,   apiResult.teamColor, iconId);
-          setTimeout(paint, 500,   apiResult.teamColor, iconId);
-          setTimeout(paint, 1000,  apiResult.teamColor, iconId);
-          setTimeout(paint, 1500,  apiResult.teamColor, iconId);
+          setTimeout(paint, 100,  apiResult.teamColor, iconId);
+          setTimeout(paint, 500,  apiResult.teamColor, iconId);
+          setTimeout(paint, 1500, apiResult.teamColor, iconId);
 
         } else {
           throw "Missing required keys (teamName, teamAbbr) from /champion API response";
@@ -815,7 +810,7 @@
         } else if(mode==23) {
 
           ////////////////////////////
-          // Hellmouth II Cup Series
+          // Hellmouth Cup Series
           // Scheduled
 
           // HCS has no league, single-column
@@ -896,17 +891,6 @@
                 var mapTags = elem.getElementsByClassName('map-name');
                 for (let mt in mapTags) {
                   mapTags[mt].innerHTML = mapName;
-                }
-              }
-
-              // Update rule name
-              if (game.hasOwnProperty('ruleName')) {
-                var ruleName = game.ruleName;
-                var ruleTags = elem.getElementsByClassName('rule-name');
-                var rt;
-                for (rt = 0; rt < ruleTags.length; rt++) {
-                  ruleNameElem = ruleTags[rt];
-                  ruleNameElem.innerHTML = ruleName;
                 }
               }
 
@@ -1112,7 +1096,7 @@
         } else if (mode==33) {
 
           ////////////////////////////
-          // Hellmouth II Cup Series
+          // Hellmouth Cup Series
           // In progress
 
           // HCS has no league, single-column
